@@ -164,7 +164,7 @@ VITE_CLERK_PUBLISHABLE_KEY=your_vite_clerk_publishable_key
 VITE_API_BASE=your_vite_api_base
 ```
 
-Create a `.env` file inside the `frontend` folder and add:
+Create a `.env` file inside the `admin` folder and add:
 
 ```env
 VITE_CLERK_PUBLISHABLE_KEY=your_vite_clerk_publishable_key
