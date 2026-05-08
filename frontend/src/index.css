@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+:root {
+  --text: #f3f3f3;
+  letter-spacing: 0.18px;
+  color: var(--text);  
+}
+
+
+
+
+
+
+
