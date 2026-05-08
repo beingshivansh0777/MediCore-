@@ -72,6 +72,7 @@ MediCore helps users book appointments, explore healthcare services, and manage 
 - Multer
 - ESLint
 - Git & GitHub
+- Stripe
 
 ---
 
