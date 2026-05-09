@@ -1,5 +1,6 @@
 import Appointment from "../models/appointmentModel.js";
 import Doctor from "../models/doctorModel.js";
+import { sendAppointmentConfirmationEmail } from '../utils/sendEmail.js';
 import dotenv from "dotenv";
 import Stripe from "stripe";
 import { getAuth } from "@clerk/express";
@@ -183,7 +184,6 @@ export const createAppointment = async (req, res) => {
     const ownerId = doctor.owner || MAJOR_ADMIN_ID || userId;
 
     // 3. Duplicate Slot Check (Pre-flight)
-    // Prevents redirecting to payment if someone else just booked this exact slot
     const slotExists = await Appointment.findOne({
       doctorId,
       date: new Date(date),
@@ -231,9 +231,20 @@ export const createAppointment = async (req, res) => {
         },
       });
 
-      // Front-end will check for 'appointment' and navigate to success page
-      return res.status(201).json({ 
-        success: true, 
+      // Send confirmation email (non-blocking)
+      sendAppointmentConfirmationEmail({
+        to: email,
+        patientName,
+        doctorName: doctor.name,
+        speciality: doctor.specialization || "",
+        date,
+        time,
+        fees: numericFee,
+        appointmentId: created._id,
+      }).catch(err => console.error("Appointment email failed:", err));
+
+      return res.status(201).json({
+        success: true,
         appointment: created,
         message: "Appointment booked successfully (Cash/Free)"
       });
@@ -253,7 +264,7 @@ export const createAppointment = async (req, res) => {
           price_data: {
             currency: "inr",
             product_data: {
-              name: `Dr. ${doctor.name} - Appointment`,
+              name: `${doctor.name} - Appointment`,
               description: `Date: ${date} | Time: ${time}`,
             },
             unit_amount: Math.round(numericFee * 100),
@@ -261,13 +272,12 @@ export const createAppointment = async (req, res) => {
           quantity: 1,
         },
       ],
-      // Redirects back with session_id for confirmation logic
       success_url: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.FRONTEND_URL}/payment-failed`,
-      metadata: baseData, 
+      metadata: baseData,
     });
 
-    // We do NOT save to DB here. The confirmPayment controller handles creation.
+    // Email for online payment is handled in confirmPayment after Stripe confirms
     return res.status(200).json({
       success: true,
       checkoutUrl: session.url,
@@ -276,9 +286,9 @@ export const createAppointment = async (req, res) => {
 
   } catch (error) {
     console.error("Create appointment error:", error);
-    return res.status(500).json({ 
-      success: false, 
-      message: "An error occurred while processing your booking." 
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while processing your booking."
     });
   }
 };
@@ -320,8 +330,6 @@ export const confirmPayment = async (req, res) => {
     const data = session.metadata;
 
     // 5. Create the Appointment record
-    // All fields from metadata are strings, so convert numbers using Number()
-    // ... inside confirmPayment
     const newAppointment = await Appointment.create({
       doctorId: data.doctorId,
       doctorName: data.doctorName,
@@ -335,24 +343,30 @@ export const confirmPayment = async (req, res) => {
       notes: data.notes,
       createdBy: data.createdBy,
       owner: data.owner,
+      email: data.email,        // ← added
       status: "Confirmed",
-
-      // MOVE THESE HERE (Top Level)
       sessionId: session_id,
       paidAt: new Date(),
-
       payment: {
         method: "Online",
         status: "Paid",
         amount: Number(data.fees),
-        // providerId: "", (Matches your default)
       },
     });
 
-    console.log(
-      "Doctor Appointment created after payment:",
-      newAppointment._id,
-    );
+    console.log("Doctor Appointment created after payment:", newAppointment._id);
+
+    // 6. Send confirmation email (non-blocking)
+    sendAppointmentConfirmationEmail({
+      to: data.email,
+      patientName: data.patientName,
+      doctorName: data.doctorName,
+      speciality: data.speciality,
+      date: data.date,
+      time: data.time,
+      fees: data.fees,
+      appointmentId: newAppointment._id,
+    }).catch(err => console.error("Appointment email failed:", err));
 
     return res.json({
       success: true,
@@ -360,7 +374,6 @@ export const confirmPayment = async (req, res) => {
     });
   } catch (error) {
     console.error("confirmPayment Error:", error);
-    // Log the full error to see exactly which field failed validation
     return res.status(500).json({
       success: false,
       message: "Server error during confirmation",

@@ -108,6 +108,10 @@ const appointmentSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    email : {
+      type : String,
+      default : ""
+    }
   },
   {
     timestamps: true,
