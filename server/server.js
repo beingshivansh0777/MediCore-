@@ -13,10 +13,9 @@ const app = express();
 const port = process.env.PORT || 4000;
 
 // Normalize origin
-const allowedOrigins = [
-  process.env.FRONTEND_URL?.replace(/\/$/, ""),
-  process.env.ADMIN_URL,
-].filter(Boolean);
+const allowedOrigins = [process.env.FRONTEND_URL, process.env.ADMIN_URL]
+  .filter(Boolean)
+  .map((url) => url.replace(/\/$/, "")); // Ensure NO trailing slashes
 
 app.use(
   cors({
@@ -31,9 +30,8 @@ app.use(
       }
     },
     credentials: true,
-  })
+  }),
 );
-
 
 // Middlewares
 app.use(express.json({ limit: "20kb" }));
