@@ -15,18 +15,14 @@ import {
 
 const appointmentRouter = express.Router();
 
-appointmentRouter.use(clerkMiddleware());
 
 // 1. PUBLIC / GENERAL 
 appointmentRouter.get("/", getAppointment);
-
-// 2. PAYMENT CONFIRMATION (Keep this high up)
-// This matches: GET /api/appointments/payment/confirm?session_id=...
 appointmentRouter.get("/payment/confirm", confirmPayment);
-
-// 3. ADMIN & ANALYTICS (Move these ABOVE the /:id route)
 appointmentRouter.get("/stats/summary", getStats);
 appointmentRouter.get("/patients/count", getRegisteredUserCount);
+
+appointmentRouter.use(clerkMiddleware());
 
 // 4. USER SPECIFIC
 appointmentRouter.get("/me", getAppointmentByPatient);
