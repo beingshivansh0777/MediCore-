@@ -13,24 +13,29 @@ const app = express();
 const port = process.env.PORT || 4000;
 
 // Normalize origin
-const allowedOrigins = [process.env.FRONTEND_URL, process.env.ADMIN_URL]
-  .filter(Boolean)
-  .map((url) => url.replace(/\/$/, "")); // Ensure NO trailing slashes
+// const allowedOrigins = [process.env.FRONTEND_URL, process.env.ADMIN_URL]
+//   .filter(Boolean)
+//   .map((url) => url.replace(/\/$/, "")); // Ensure NO trailing slashes
 
+// app.use(
+//   cors({
+//     origin: (origin, callback) => {
+//       if (!origin) {
+//         return callback(null, true);
+//       }
+//       if (allowedOrigins.includes(origin)) {
+//         callback(null, true);
+//       } else {
+//         callback(new Error("Not allowed by CORS"));
+//       }
+//     },
+//     credentials: true,
+//   }),
+// );
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) {
-        return callback(null, true);
-      }
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  }),
+    origin: "*",
+  })
 );
 
 // Middlewares
