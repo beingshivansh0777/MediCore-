@@ -5,7 +5,7 @@ import React, {
   useLayoutEffect,
   useEffect,
 } from "react";
-import logoImg from "/Users/shivanshmishra/Desktop/MediCore/admin/public/logo.png";
+import logoImg from "/logo.png";
 import { Link, useNavigate, useLocation, NavLink } from "react-router-dom";
 import {
   Calendar,
