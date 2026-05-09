@@ -2,6 +2,7 @@ import ServiceAppointment from "../models/serviceAppointmet.js";
 import Service from "../models/serviceModel.js";
 import Stripe from "stripe";
 import { getAuth } from "@clerk/express";
+import { sendServiceConfirmationEmail } from '../utils/sendEmail.js';
 
 const stripeKey = process.env.STRIPE_SECRET_KEY || null;
 const stripe = stripeKey
@@ -166,11 +167,9 @@ export const createServiceAppointmet = async (req, res) => {
       age: String(age || ""),
       gender: String(gender || ""),
       date: String(date),
-
       hour: String(finalHour),
       minute: String(finalMinute),
       ampm: String(finalAmpm),
-
       fees: String(numericAmount),
       clerkUserId: String(clerkUserId),
       notes: String(notes).substring(0, 400),
@@ -191,6 +190,17 @@ export const createServiceAppointmet = async (req, res) => {
           amount: numericAmount,
         },
       });
+
+      // Send confirmation email (non-blocking)
+      sendServiceConfirmationEmail({
+        to: email,
+        patientName,
+        serviceName: baseData.serviceName,
+        date,
+        time: `${finalHour}:${String(finalMinute).padStart(2, '0')} ${finalAmpm}`,
+        fees: numericAmount,
+        appointmentId: created._id,
+      }).catch(err => console.error("Service email failed:", err));
 
       return res.status(201).json({
         success: true,
@@ -229,21 +239,22 @@ export const createServiceAppointmet = async (req, res) => {
         age: baseData.age,
         gender: baseData.gender,
         date: baseData.date,
-
         hour: baseData.hour,
         minute: baseData.minute,
         ampm: baseData.ampm,
-
         fees: baseData.fees,
         clerkUserId: baseData.clerkUserId,
         notes: baseData.notes,
+        email: String(email || ""),
       },
     });
 
+    // Email for online payment handled in confirmPayment after Stripe confirms
     return res.status(200).json({
       success: true,
       checkoutUrl: session.url,
     });
+
   } catch (err) {
     console.error("createServiceAppointmet error:", err);
     return res.status(500).json({
@@ -309,18 +320,28 @@ export const confirmPayment = async (req, res) => {
       ampm: data.ampm,
       fees: Number(data.fees),
       notes: data.notes || "",
-      createdBy: data.clerkUserId, // Ensure this matches your schema field name
+      createdBy: data.clerkUserId,
       status: "Confirmed",
-      
-      // ✅ Match Schema Structure
+
       payment: {
         method: "Online",
         status: "Paid",
         amount: Number(data.fees),
-        sessionId: session_id, // Nested correctly
+        sessionId: session_id,
         paidAt: new Date(),
       },
     });
+
+    // ✅ Send confirmation email (non-blocking)
+    sendServiceConfirmationEmail({
+      to: data.email,
+      patientName: data.patientName,
+      serviceName: data.serviceName,
+      date: data.date,
+      time: `${data.hour}:${String(data.minute).padStart(2, '0')} ${data.ampm}`,
+      fees: data.fees,
+      appointmentId: newAppointment._id,
+    }).catch(err => console.error("Service email failed:", err));
 
     return res.json({ success: true, data: newAppointment });
   } catch (error) {
