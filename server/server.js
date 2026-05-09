@@ -13,27 +13,27 @@ const app = express();
 const port = process.env.PORT || 4000;
 
 // Normalize origin
-// const allowedOrigins = [
-//   process.env.FRONTEND_URL?.replace(/\/$/, ""),
-//   process.env.ADMIN_URL,
-// ].filter(Boolean);
+const allowedOrigins = [
+  process.env.FRONTEND_URL?.replace(/\/$/, ""),
+  process.env.ADMIN_URL,
+].filter(Boolean);
 
-// app.use(
-//   cors({
-//     origin: (origin, callback) => {
-//       if (!origin) {
-//         return callback(null, true);
-//       }
-//       if (allowedOrigins.includes(origin)) {
-//         callback(null, true);
-//       } else {
-//         callback(new Error("Not allowed by CORS"));
-//       }
-//     },
-//     credentials: true,
-//   })
-// );
-app.use(cors({ origin: "*" }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) {
+        return callback(null, true);
+      }
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
+// app.use(cors({ origin: "*" }));
 
 // Middlewares
 app.use(express.json({ limit: "20kb" }));
