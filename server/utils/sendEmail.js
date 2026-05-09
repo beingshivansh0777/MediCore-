@@ -29,8 +29,8 @@ export const sendAppointmentConfirmationEmail = async ({
           <!-- HEADER -->
           <tr>
             <td align="center" style="background:linear-gradient(135deg,#0f766e,#0ea5e9);border-radius:16px 16px 0 0;padding:40px 32px 32px;">
-              <h1 style="margin:0;font-size:28px;font-weight:700 text-emerald-700;letter-spacing:1px;">MediCore</h1>
-              <p style="margin:4px 0 0;font-size:13px;text-emrald-500;letter-spacing:2px;text-transform:uppercase;">HealthCare Solutions</p>
+              <h1 style="margin:0;font-size:28px;font-weight:700;color:#ffffff;letter-spacing:1px;">MediCore</h1>
+              <p style="margin:4px 0 0;font-size:13px;color:rgba(255,255,255,0.75);letter-spacing:2px;text-transform:uppercase;">HealthCare Solutions</p>
               <div style="width:48px;height:2px;background:rgba(255,255,255,0.4);margin:20px auto;border-radius:2px;"></div>
               <div style="display:inline-block;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:999px;padding:6px 20px;">
                 <span style="font-size:13px;color:#ffffff;font-weight:500;">✅ Appointment Confirmed</span>
