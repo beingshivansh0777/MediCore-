@@ -1,6 +1,6 @@
 import React from "react";
 import Navbar from "../components/Navbar.jsx";
-import logoImg from "../assets/logo.png";
+import logoImg from "/Users/shivanshmishra/Desktop/MediCore/admin/public/logo.png";
 
 const Hero = ({ role = "admin", userName = "Doctor" }) => {
   const isDoctor = role === "doctor";
