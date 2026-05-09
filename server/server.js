@@ -15,25 +15,24 @@ const port = process.env.PORT || 4000;
 // Normalize origin
 const allowedOrigins = [
   process.env.FRONTEND_URL?.replace(/\/$/, ""),
-  process.env.ADMIN_URL
+  process.env.ADMIN_URL,
 ].filter(Boolean);
 
-
-
-//CORS 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        return callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  })
-);
+//CORS
+// app.use(
+//   cors({
+//     origin: function (origin, callback) {
+//       if (!origin) return callback(null, true);
+//       if (allowedOrigins.includes(origin)) {
+//         return callback(null, true);
+//       } else {
+//         return callback(new Error("Not allowed by CORS"));
+//       }
+//     },
+//     credentials: true,
+//   })
+// );
+app.use(cors({ origin: "*" }));
 
 // Middlewares
 app.use(express.json({ limit: "20kb" }));
