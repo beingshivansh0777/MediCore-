@@ -117,7 +117,7 @@ const appointmentSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
-appointmentSchema.index({ doctorId: 1, date: 1, time: 1 }, { unique: true });
+appointmentSchema.index({ doctorId: 1, date: 1, time: 1, createdBy: 1 }, { unique: true });
 
 const Appointment =
   mongoose.models.Appointment ||
