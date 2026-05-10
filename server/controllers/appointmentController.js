@@ -1,6 +1,6 @@
 import Appointment from "../models/appointmentModel.js";
 import Doctor from "../models/doctorModel.js";
-import { sendAppointmentConfirmationEmail } from '../utils/sendEmail.js';
+import { sendAppointmentConfirmationEmail } from "../utils/sendEmail.js";
 import dotenv from "dotenv";
 import Stripe from "stripe";
 import { getAuth } from "@clerk/express";
@@ -166,35 +166,43 @@ export const createAppointment = async (req, res) => {
 
     const userId = resolveClerkUserId(req);
     if (!userId) {
-      return res.status(401).json({ success: false, message: "Login required" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Login required" });
     }
 
     // 1. Basic Validation
     if (!doctorId || !patientName || !mobile || !date || !time) {
-      return res.status(400).json({ success: false, message: "Missing required fields" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing required fields" });
     }
 
     // 2. Fetch Doctor Details
     const doctor = await Doctor.findById(doctorId).lean();
     if (!doctor) {
-      return res.status(404).json({ success: false, message: "Doctor not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Doctor not found" });
     }
 
     const numericFee = safeNumber(fees ?? 0);
     const ownerId = doctor.owner || MAJOR_ADMIN_ID || userId;
 
     // 3. Duplicate Slot Check (Pre-flight)
+    // 3. Duplicate Slot Check — only block SAME user booking same slot twice
     const slotExists = await Appointment.findOne({
       doctorId,
       date: new Date(date),
       time,
-      status: { $ne: "Cancelled" }
+      createdBy: userId, // ← only check for this specific user
+      status: { $ne: "Cancelled" },
     });
 
     if (slotExists) {
       return res.status(409).json({
         success: false,
-        message: "This time slot has already been booked. Please select another."
+        message: "You have already booked this time slot.",
       });
     }
 
@@ -241,18 +249,20 @@ export const createAppointment = async (req, res) => {
         time,
         fees: numericFee,
         appointmentId: created._id,
-      }).catch(err => console.error("Appointment email failed:", err));
+      }).catch((err) => console.error("Appointment email failed:", err));
 
       return res.status(201).json({
         success: true,
         appointment: created,
-        message: "Appointment booked successfully (Cash/Free)"
+        message: "Appointment booked successfully (Cash/Free)",
       });
     }
 
     // ================= CASE B: ONLINE PAYMENT (STRIPE) =================
     if (!stripe) {
-      return res.status(500).json({ success: false, message: "Payment gateway not configured" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Payment gateway not configured" });
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -283,12 +293,11 @@ export const createAppointment = async (req, res) => {
       checkoutUrl: session.url,
       sessionId: session.id,
     });
-
   } catch (error) {
     console.error("Create appointment error:", error);
     return res.status(500).json({
       success: false,
-      message: "An error occurred while processing your booking."
+      message: "An error occurred while processing your booking.",
     });
   }
 };
@@ -343,7 +352,7 @@ export const confirmPayment = async (req, res) => {
       notes: data.notes,
       createdBy: data.createdBy,
       owner: data.owner,
-      email: data.email,        // ← added
+      email: data.email, // ← added
       status: "Confirmed",
       sessionId: session_id,
       paidAt: new Date(),
@@ -354,7 +363,10 @@ export const confirmPayment = async (req, res) => {
       },
     });
 
-    console.log("Doctor Appointment created after payment:", newAppointment._id);
+    console.log(
+      "Doctor Appointment created after payment:",
+      newAppointment._id,
+    );
 
     // 6. Send confirmation email (non-blocking)
     sendAppointmentConfirmationEmail({
@@ -366,7 +378,7 @@ export const confirmPayment = async (req, res) => {
       time: data.time,
       fees: data.fees,
       appointmentId: newAppointment._id,
-    }).catch(err => console.error("Appointment email failed:", err));
+    }).catch((err) => console.error("Appointment email failed:", err));
 
     return res.json({
       success: true,
@@ -430,7 +442,7 @@ export const cancelAppointment = async (req, res) => {
     const appt = await Appointment.findByIdAndUpdate(
       id,
       { status: "Cancelled" },
-      { new: true }
+      { new: true },
     );
 
     if (!appt) {
