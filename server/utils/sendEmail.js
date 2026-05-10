@@ -14,7 +14,7 @@ export const sendAppointmentConfirmationEmail = async ({
   await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL,
     to,
-    subject: `Appointment Confirmed – Dr. ${doctorName}`,
+    subject: `Appointment Confirmed – ${doctorName}`,
     html: `
 <!DOCTYPE html>
 <html>
