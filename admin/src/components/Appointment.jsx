@@ -4,9 +4,12 @@ import React, { useEffect, useMemo, useState } from "react";
 const API_BASE = import.meta.env.VITE_API_BASE;
 
 //helper function
+// helper function
 function formatDateISO(iso) {
   try {
-    const d = new Date(iso + "T00:00:00");
+    if (!iso) return "N/A";
+    const d = new Date(iso); // ← remove the "T00:00:00" concat, just parse directly
+    if (isNaN(d.getTime())) return "Invalid Date";
     return d.toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
@@ -19,17 +22,28 @@ function formatDateISO(iso) {
 
 function dateTimeFromSlot(slot) {
   try {
-    const [y, m, d] = slot.date.split("-");
-    const base = new Date(Number(y), Number(m) - 1, Number(d), 0, 0, 0, 0);
+    if (!slot?.date) return new Date(0);
 
-    const [time, ampm] = slot.time.split(" ");
-    let [hh, mm] = time.split(":").map(Number);
-    if (ampm === "PM" && hh !== 12) hh += 12;
-    if (ampm === "AM" && hh === 12) hh = 0;
-    base.setHours(hh, mm, 0, 0);
+    // Parse the date safely whether it's "2025-05-10" or full ISO
+    const base = new Date(slot.date);
+    if (isNaN(base.getTime())) return new Date(0);
+
+    // Parse time like "10:30 AM"
+    if (slot.time) {
+      const match = slot.time.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (match) {
+        let hh = parseInt(match[1], 10);
+        const mm = parseInt(match[2], 10);
+        const ampm = match[3].toUpperCase();
+        if (ampm === "PM" && hh !== 12) hh += 12;
+        if (ampm === "AM" && hh === 12) hh = 0;
+        base.setHours(hh, mm, 0, 0);
+      }
+    }
+
     return base;
   } catch (e) {
-    return new Date(slot.date + "T00:00:00");
+    return new Date(0);
   }
 }
 
