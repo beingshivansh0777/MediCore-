@@ -73,6 +73,7 @@ MediCore helps users book appointments, explore healthcare services, and manage 
 - ESLint
 - Git & GitHub
 - Stripe
+- Resend 
 
 ---
 
